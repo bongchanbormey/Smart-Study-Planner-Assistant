@@ -62,20 +62,24 @@ elif st.session_state.selected_option == "Document Q&A":
         user_query = st.text_input("Ask a Question about the document:")
 
         if user_query:
-            # Get answer from OpenAI model
-            answer, doc_text = query_document(cleaned_text, user_query)
-            
-            # Display the result with better formatting
-            st.subheader("Answer:")
-            st.write(f"**Question:** {user_query}")
-            st.write(f"**Answer:** {answer}")
-            st.write(f"**Relevant Text from Document:** {doc_text}")
+            try:
+                # Get answer using LangChain
+                with st.spinner("Processing your query..."):
+                    answer, relevant_text = query_document(cleaned_text, user_query)
+                
+                # Display the result
+                st.subheader("Answer:")
+                st.write(f"**Question:** {user_query}")
+                st.write(f"**Answer:** {answer}")
+                st.write(f"**Relevant Text from Document:** {relevant_text}")
+            except Exception as e:
+                st.error(f"An error occurred while processing your query: {str(e)}")
         
-        # Read and display the Q&A history from the CSV file
+        # Display Q&A history from the CSV file
         if os.path.exists('qa_log.csv'):
             qa_df = pd.read_csv('qa_log.csv')
             st.subheader("Q&A History")
-            st.dataframe(qa_df)  # Display the CSV data as a table
+            st.dataframe(qa_df)
 
 elif st.session_state.selected_option == "Study Planner":
     st.title("📅 Study Planner")
