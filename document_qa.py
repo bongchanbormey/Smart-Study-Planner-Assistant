@@ -1,7 +1,7 @@
 import os
 import csv
+import re
 from langchain.chat_models import ChatOpenAI
-from langchain.chains import RetrievalQA
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.text_splitter import CharacterTextSplitter
@@ -15,22 +15,30 @@ def log_qa_to_file(question, answer, relevant_text):
             writer.writerow(["Question", "Answer", "Relevant Text"])
         writer.writerow([question, answer, relevant_text])
 
+# Extract relevant sentences from the document
+def extract_relevant_text(document_text, user_query):
+    keyword = re.escape(user_query.lower())  # Escape special characters in the query
+    sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s', document_text)  # Split into sentences
 
+    # Extract sentences that contain the keyword
+    relevant_sentences = [sentence for sentence in sentences if re.search(r'\b' + keyword + r'\b', sentence.lower())]
 
+    # Highlight the keyword within the relevant sentences
+    highlighted_sentences = [
+        re.sub(r'\b' + keyword + r'\b', lambda match: f"**{match.group(0)}**", sentence, flags=re.IGNORECASE)
+        for sentence in relevant_sentences
+    ]
+
+    # Join all relevant sentences into a single text block
+    return " ".join(highlighted_sentences)
+
+# Query the document and return the answer and relevant text
 def query_document(document_text, user_query):
-    from langchain.prompts import PromptTemplate
-    from langchain.chains import LLMChain
-    from langchain.embeddings import OpenAIEmbeddings
-    from langchain.vectorstores import FAISS
-    from langchain.chat_models import ChatOpenAI
-    from langchain.text_splitter import CharacterTextSplitter
-
-    api_key = os.getenv("OPENAI_API_KEY", "key") 
-
-    # Step 1: Split the document into chunks
+    api_key = os.getenv("OPENAI_API_KEY", "key")
+    # Step 1: Split the document into manageable chunks
     text_splitter = CharacterTextSplitter(
         separator="\n",
-        chunk_size=500,  # Focused chunks for precise matching
+        chunk_size=500,  # Split into focused chunks
         chunk_overlap=100
     )
     texts = text_splitter.split_text(document_text)
@@ -40,13 +48,16 @@ def query_document(document_text, user_query):
     vectorstore = FAISS.from_texts(texts, embeddings)
 
     # Step 3: Retrieve the most relevant chunks for the query
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})  # Top 3 chunks for relevance
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
     relevant_docs = retriever.get_relevant_documents(user_query)
 
     # Combine relevant chunks into a single text
-    relevant_text = " ".join([doc.page_content for doc in relevant_docs])
+    relevant_text_from_docs = " ".join([doc.page_content for doc in relevant_docs])
 
-    # Step 4: Generate the answer based on the relevant text
+    # Step 4: Extract relevant text with highlighted keywords
+    highlighted_relevant_text = extract_relevant_text(relevant_text_from_docs, user_query)
+
+    # Step 5: Generate an answer based on the highlighted relevant text
     chat_model = ChatOpenAI(
         model="gpt-3.5-turbo",
         temperature=0,
@@ -54,28 +65,22 @@ def query_document(document_text, user_query):
     )
 
     prompt_template = """
-    You are an AI assistant answering questions based strictly on the provided context.
-
+    You are a helpful AI assistant answering questions based on the provided context. 
     Context:
     {context}
 
     Question:
     {query}
 
-    Provide a concise and accurate answer based only on the context above.
+    Provide a concise, accurate, and detailed answer based on the context above.
     """
-    prompt = PromptTemplate(
-        template=prompt_template,
-        input_variables=["context", "query"]
-    )
+    prompt = prompt_template.format(context=relevant_text_from_docs, query=user_query)
 
-    llm_chain = LLMChain(llm=chat_model, prompt=prompt)
+    # Generate the answer using the LLM
+    answer = chat_model.predict(prompt)
 
-    # Generate the answer
-    answer = llm_chain.run(context=relevant_text, query=user_query)
+    # Log the results
+    log_qa_to_file(user_query, answer, relevant_text_from_docs)
 
-    # Log the results to a file
-    log_qa_to_file(user_query, answer, relevant_text)
-
-    # Return the generated answer and relevant text
-    return answer.strip(), relevant_text.strip()
+    # Return the answer and the relevant text
+    return answer.strip(), relevant_text_from_docs.strip()
