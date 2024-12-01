@@ -4,20 +4,19 @@ from document_qa import query_document
 import re
 import pandas as pd
 import os
+from study_planner import study_planner_ui
+from focus_timer import focus_timer
+
+# Streamlit app configuration - must be the first command
+st.set_page_config(page_title="Smart Study Planner", layout="wide")
 
 # Helper function to clean and format PDF text
 def clean_pdf_text(raw_text):
-    """
-    Cleans and formats raw text extracted from a PDF document.
-    - Removes extra newlines.
-    - Combines lines into complete sentences where possible.
-    """
     text = re.sub(r'\n+', '\n', raw_text)
     lines = text.splitlines()
     cleaned_lines = []
     for line in lines:
         if line.strip():
-            # Merge incomplete lines with previous line
             if cleaned_lines and not line.endswith(('.', '!', '?')):
                 cleaned_lines[-1] += " " + line.strip()
             else:
@@ -25,16 +24,13 @@ def clean_pdf_text(raw_text):
     formatted_text = "\n\n".join(cleaned_lines)
     return formatted_text
 
-# Streamlit app configuration
-st.set_page_config(page_title="Smart Study Planner", layout="wide")
-
 # Sidebar navigation
 st.sidebar.title("Navigation")
 if 'selected_option' not in st.session_state:
     st.session_state.selected_option = "Home"
 
 # Sidebar options
-options = ["Home", "Document Q&A", "Study Planner"]
+options = ["Home", "Document Q&A", "Study Planner", "Focus Timer"]
 selected_option = st.sidebar.radio("Go to", options)
 st.session_state.selected_option = selected_option
 
@@ -48,6 +44,7 @@ if st.session_state.selected_option == "Home":
         ### How to Use:
         - **Document Q&A**: Upload a document and ask questions to extract relevant information.
         - **Study Planner**: Plan your study sessions and set goals.
+        - **Focus Timer**: Set time for your study sessions for better focus.
     """)
 
 elif st.session_state.selected_option == "Document Q&A":
@@ -55,11 +52,12 @@ elif st.session_state.selected_option == "Document Q&A":
     uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
 
     if uploaded_file:
-        # Extract text from uploaded PDF
         reader = PdfReader(uploaded_file)
-        raw_text = "".join(page.extract_text() for page in reader.pages)
+        raw_text = ""
+        for page in reader.pages:
+            raw_text += page.extract_text()
 
-        # Clean and format the extracted text
+        # Clean and format extracted text
         cleaned_text = clean_pdf_text(raw_text)
         st.text_area("Document Content", cleaned_text, height=300)
 
@@ -92,4 +90,8 @@ elif st.session_state.selected_option == "Document Q&A":
 
 elif st.session_state.selected_option == "Study Planner":
     st.title("📅 Study Planner")
-    st.write("This feature is under development!")
+    study_planner_ui()
+
+elif st.session_state.selected_option == "Focus Timer":
+    st.title("⏰ Focus Timer")
+    focus_timer()
