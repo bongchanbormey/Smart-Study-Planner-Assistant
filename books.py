@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
 
+# Load the cleaned dataset
 def load_data():
     try:
         # Load the cleaned dataset
