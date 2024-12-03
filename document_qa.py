@@ -34,7 +34,8 @@ def extract_relevant_text(document_text, user_query):
 
 # Query the document and return the answer and relevant text
 def query_document(document_text, user_query):
-    api_key = os.getenv("OPENAI_API_KEY", "key")
+    api_key = os.getenv("OPENAI_API_KEY", "ADD-OPENAI-API-KEY-HERE") 
+
     # Step 1: Split the document into manageable chunks
     text_splitter = CharacterTextSplitter(
         separator="\n",
