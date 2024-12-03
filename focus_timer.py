@@ -3,7 +3,6 @@ import time
 
 # Function to handle the focus timer and progress logging
 def focus_timer():
-    st.title("⏳ Focus Timer")
     st.write("Boost your productivity with automated focus sessions and breaks!")
 
     # Timer Settings
@@ -106,4 +105,3 @@ def focus_timer():
     progress_icon = "🍅" * completed_sessions
     remaining_icon = "🍅" * (total_sessions - completed_sessions)
     st.write(f"{progress_icon}{remaining_icon} ({completed_sessions}/{total_sessions} sessions)")
-
