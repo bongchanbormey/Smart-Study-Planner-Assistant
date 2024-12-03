@@ -6,9 +6,26 @@ import pandas as pd
 import os
 from study_planner import study_planner_ui
 from focus_timer import focus_timer
+from books import book_recommendation_ui
+from summarizer import document_summarizer_ui
 
 # Streamlit app configuration - must be the first command
 st.set_page_config(page_title="Smart Study Planner", layout="wide")
+
+# Sidebar navigation
+st.sidebar.title("Navigation")
+if 'selected_option' not in st.session_state:
+    st.session_state.selected_option = "Home"
+
+# Sidebar options
+options = ["Home", 
+           "Document Q&A", 
+           "Study Planner", 
+           "Focus Timer", 
+           "Book Recommender",
+           "Document Summarizer"]
+selected_option = st.sidebar.radio("Go to", options)
+st.session_state.selected_option = selected_option
 
 # Helper function to clean and format PDF text
 def clean_pdf_text(raw_text):
@@ -24,18 +41,25 @@ def clean_pdf_text(raw_text):
     formatted_text = "\n\n".join(cleaned_lines)
     return formatted_text
 
-# Sidebar navigation
-st.sidebar.title("Navigation")
-if 'selected_option' not in st.session_state:
-    st.session_state.selected_option = "Home"
-
-# Sidebar options
-options = ["Home", "Document Q&A", "Study Planner", "Focus Timer"]
-selected_option = st.sidebar.radio("Go to", options)
-st.session_state.selected_option = selected_option
+# Helper function to display the header image
+def display_header_image(page_name):
+    # Map page names to corresponding image filenames
+    header_images = {
+        "Home": "1-home.png",
+        "Document Q&A": "2-doc-qa.png",
+        "Study Planner": "4-study-planner.png",
+        "Focus Timer": "5-timer.png",
+        "Book Recommender": "6-book.png",
+        "Document Summarizer": "3-summarizer.png"
+    }
+    
+    # Get the image path for the selected page
+    header_image_path = header_images.get(page_name, "1-home.png")  # Default to Home image if not found
+    st.image(header_image_path, use_container_width=True)
 
 # Main content layout
 if st.session_state.selected_option == "Home":
+    display_header_image("Home")
     st.title("Welcome to the Smart Study Planner")
     st.write("""
         ### Home Page
@@ -45,9 +69,12 @@ if st.session_state.selected_option == "Home":
         - **Document Q&A**: Upload a document and ask questions to extract relevant information.
         - **Study Planner**: Plan your study sessions and set goals.
         - **Focus Timer**: Set time for your study sessions for better focus.
+        - **Book Recommendation**: Find more books of your interest to read.
+        - **Document Summarizer**: Get a summary of your document.
     """)
 
 elif st.session_state.selected_option == "Document Q&A":
+    display_header_image("Document Q&A")
     st.title("📄 Document Question and Answer")
     uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
 
@@ -77,7 +104,7 @@ elif st.session_state.selected_option == "Document Q&A":
 
                 # Render relevant text with markdown to properly display bold keywords
                 st.subheader("Relevant Text from Document:")
-                st.markdown(relevant_text)  # Using `st.markdown()` to properly render bold text in markdown format
+                st.markdown(relevant_text)  
 
             except Exception as e:
                 st.error(f"An error occurred while processing your query: {str(e)}")
@@ -89,9 +116,21 @@ elif st.session_state.selected_option == "Document Q&A":
             st.dataframe(qa_df)
 
 elif st.session_state.selected_option == "Study Planner":
+    display_header_image("Study Planner")
     st.title("📅 Study Planner")
     study_planner_ui()
 
 elif st.session_state.selected_option == "Focus Timer":
-    st.title("⏰ Focus Timer")
+    display_header_image("Focus Timer")
+    st.title("⏳ Focus Timer")
     focus_timer()
+
+elif st.session_state.selected_option == "Book Recommender":
+    display_header_image("Book Recommender")
+    st.title("📚 Book Recommendation")
+    book_recommendation_ui()
+    
+elif st.session_state.selected_option == "Document Summarizer":
+    display_header_image("Document Summarizer")
+    st.title("📄 Document Summarizer")
+    document_summarizer_ui()
