@@ -104,6 +104,7 @@ The project requires the following Python libraries:
 - `pandas`
 - `sklearn`
 - `PyPDF2`
+- `langchain'
 
 To install them, run:
 
