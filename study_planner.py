@@ -110,9 +110,9 @@ def study_planner_ui():
         
         # Highlight Priority levels with colors
         def highlight_priority(priority):
-            colors = {"High": "background-color: #f28b82",  # Red
+            colors = {"High": "background-color: #f28b82",    # Red
                       "Medium": "background-color: #fbbc04",  # Yellow
-                      "Low": "background-color: #34a853"}  # Green
+                      "Low": "background-color: #34a853"}     # Green
             return colors.get(priority, "")
         
         # Apply formatting to the Priority column
