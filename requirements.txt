@@ -1,4 +1,6 @@
 streamlit
-langchain
 openai
+pandas
+sklearn
 PyPDF2
+langchain
